@@ -1,0 +1,234 @@
+import java.util.*;
+
+public class Exercise27_01 {
+
+    public static void main(String[] args) {
+        MyLinearProbingHashMap<Integer, Integer> map = new MyLinearProbingHashMap<>();
+        Scanner input = new Scanner(System.in);
+
+        System.out.print("Enter integer keys, input ends with a negative value: ");
+        int key = input.nextInt();
+        while (key >= 0) {
+            map.put(key, key);
+            key = input.nextInt();
+        }
+
+        System.out.print("Enter key1: ");
+        int key1 = input.nextInt();
+        System.out.println("Is " + key1 + " in the map? " + map.containsKey(key1));
+
+        System.out.print("Enter key2: ");
+        int key2 = input.nextInt();
+        System.out.println("Is " + key2 + " in the map? " + map.containsKey(key2));
+
+        System.out.println("The map size is " + map.size());
+
+        map.remove(2);
+        System.out.println("After removing key 2 from the map, is key 2 in the map? " + map.containsKey(2));
+        System.out.println("The map size is " + map.size());
+    }
+}
+
+interface MyMap<K, V> {
+
+    public void clear();
+
+
+    public boolean containsKey(K key);
+    public boolean containsValue(V value);
+
+
+    public java.util.Set<Entry<K, V>> entrySet();
+
+    public V get(K key);
+
+   
+    public boolean isEmpty();
+
+
+    public java.util.Set<K> keySet();
+
+
+    public V put(K key, V value);
+
+
+    public void remove(K key);
+
+
+    public int size();
+
+
+    public java.util.Set<V> values();
+
+
+    public static class Entry<K, V> {
+        K key;
+        V value;
+
+        public Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + key + ", " + value + "]";
+        }
+    }
+}
+
+class MyLinearProbingHashMap<K, V> implements MyMap<K, V> {
+    private static int DEFAULT_INITIAL_CAPACITY = 4;
+    private static float DEFAULT_LOAD_FACTOR = 0.5f;
+
+    private int capacity;
+    private float loadFactorThreshold;
+    private int size = 0;
+    private MyMap.Entry<K, V>[] table;
+
+
+    public MyLinearProbingHashMap() {
+        this.capacity = DEFAULT_INITIAL_CAPACITY;
+        this.loadFactorThreshold = DEFAULT_LOAD_FACTOR;
+        @SuppressWarnings("unchecked")
+        MyMap.Entry<K, V>[] tempTable = new MyMap.Entry[capacity];
+        this.table = tempTable;
+    }
+
+    @Override
+    public void clear() {
+        size = 0;
+        @SuppressWarnings("unchecked")
+        MyMap.Entry<K, V>[] tempTable = new MyMap.Entry[capacity];
+        this.table = tempTable;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return get(key) != null;
+    }
+
+    @Override
+    public boolean containsValue(V value) {
+        for (int i = 0; i < table.length; i++) {
+            if (table[i] != null && table[i].value.equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public Set<MyMap.Entry<K, V>> entrySet() {
+        Set<MyMap.Entry<K, V>> set = new HashSet<>();
+        for (MyMap.Entry<K, V> entry : table) {
+            if (entry != null) {
+                set.add(entry);
+            }
+        }
+        return set;
+    }
+
+    @Override
+    public V get(K key) {
+        int index = hash(key.hashCode());
+        while (table[index] != null) {
+            if (table[index].key.equals(key)) {
+                return table[index].value;
+            }
+            index = (index + 1) % capacity;
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    @Override
+    public Set<K> keySet() {
+        Set<K> keys = new HashSet<>();
+        for (MyMap.Entry<K, V> entry : table) {
+            if (entry != null) {
+                keys.add(entry.key);
+            }
+        }
+        return keys;
+    }
+
+    @Override
+    public V put(K key, V value) {
+        if (size >= capacity * loadFactorThreshold) {
+            rehash();
+        }
+
+        int index = hash(key.hashCode());
+        while (table[index] != null && table[index].key != null && !table[index].key.equals(key)) {
+            index = (index + 1) % capacity;
+        }
+
+        if (table[index] == null || table[index].key == null) {
+            table[index] = new MyMap.Entry<>(key, value);
+            size++;
+        } else {
+            table[index].value = value;
+        }
+
+        return value;
+    }
+
+    @Override
+    public void remove(K key) {
+        int index = hash(key.hashCode());
+        while (table[index] != null) {
+            if (table[index].key.equals(key)) {
+                table[index] = new MyMap.Entry<>(null, null); 
+                size--;
+                break;
+            }
+            index = (index + 1) % capacity;
+        }
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public Set<V> values() {
+        Set<V> values = new HashSet<>();
+        for (MyMap.Entry<K, V> entry : table) {
+            if (entry != null) {
+                values.add(entry.value);
+            }
+        }
+        return values;
+    }
+
+    private int hash(int hashCode) {
+        return hashCode % capacity;
+    }
+
+    private void rehash() {
+        Set<MyMap.Entry<K, V>> entries = entrySet();
+        capacity *= 2;
+        @SuppressWarnings("unchecked")
+        MyMap.Entry<K, V>[] tempTable = new MyMap.Entry[capacity];
+        this.table = tempTable;
+        size = 0;
+
+        for (MyMap.Entry<K, V> entry : entries) {
+            put(entry.key, entry.value);
+        }
+    }
+}
